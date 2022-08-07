@@ -1,0 +1,63 @@
+#    Script developed by:
+#          Computational Rheology Group at the Institute for Polymers and Composites, University of Minho, Portugal, 2022
+#    If you find any problems/mistakes or have any improvement recommendations, please contact: info@crheo.org
+
+
+#!/bin/bash
+set -e  # exit on first error
+
+# text colors   
+Green='\033[0;32m'   
+Orange='\033[0;33m'  
+Blue='\033[0;34m'   
+NoColor='\033[0m' 
+
+for i in 1 2 3 4 5
+do
+	folder="mesh$i" #Name of the folder: mesh1, mesh2, mesh3, ...
+
+	nElements=$(( 2**($i+4) )) # Number of elements based on "i"
+
+	nDomains=$(( $i + 1 ))	   # Number of domains for parallel processing
+
+	cp -r base $folder		   # copy base folder and paste with the folder name
+
+	cd $folder				   # go inside the created folder
+
+
+	# Cleaning the folder
+
+	echo -e "${Orange}Going into $folder ${NoColor}"
+
+	echo -e "${Blue}Cleaning the folder ${NoColor}"
+
+	./Allclean
+
+
+	# Creating the mesh
+
+	echo -e "${Orange}Changing blockMeshDict ${NoColor}"
+
+	sed -i "s/hex (0 2 3 1 4 6 7 5) (32 32 1) simpleGrading (1 1 1)/hex (0 2 3 1 4 6 7 5) ("$nElements" "$nElements" 1) simpleGrading (1 1 1)/g" system/blockMeshDict
+
+
+	# # Run the case in parallel
+	# Decompose the domain
+	echo -e "${Orange}Changing decomposeParDict ${NoColor}"
+	
+	sed -i "s/numberOfSubdomains 2;/numberOfSubdomains "$nDomains";/g" system/decomposeParDict
+
+
+	# Run the case
+
+	echo -e "${Orange}Running simulation in parallel ${NoColor}"
+
+	./Allrun
+
+	echo -e "${Green}Finished with $folder ${NoColor}"
+
+
+	# Return to the main folder
+
+	cd ../
+done

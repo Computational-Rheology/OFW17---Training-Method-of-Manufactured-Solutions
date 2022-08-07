@@ -1,0 +1,21 @@
+#    Script developed by:
+#          Computational Rheology Group at the Institute for Polymers and Composites, University of Minho, Portugal, 2022
+#    If you find any problems/mistakes or have any improvement recommendations, please contact: info@crheo.org
+
+#!/bin/bash
+set -e  # exit on first error
+
+
+# text colors
+Blue='\033[0;34m'   
+NoColor='\033[0m' 
+
+# Erase all folders (mesh1 to mesh6)
+
+echo -e "${Blue}Cleaning folder${NoColor}"
+
+rm -rf mesh1/ mesh2/ mesh3/ mesh4/ mesh5/ mesh6/
+
+# Clean base case
+cd base/
+./Allclean

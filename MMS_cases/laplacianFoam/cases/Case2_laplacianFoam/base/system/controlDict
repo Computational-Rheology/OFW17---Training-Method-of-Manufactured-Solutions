@@ -1,0 +1,123 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2012                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     laplacianFoam;
+
+startFrom       startTime;
+
+startTime       0;
+
+stopAt          endTime;
+
+endTime         10;
+
+deltaT          1;
+
+writeControl    timeStep;
+
+writeInterval   1;
+
+purgeWrite      0;
+
+writeFormat     ascii;
+
+writePrecision  12;
+
+writeCompression off;
+
+timeFormat      general;
+
+timePrecision   8;
+
+functions                              
+{                                     
+    errorNorm                           
+    {                                  
+        type coded; 
+
+        libs (utilityFunctionObjects);  
+
+        writeControl writeTime;           
+                                      
+        name analyticalSolution;          
+                                      
+        codeWrite                         
+        #{                               
+            const volScalarField& T_find = mesh().lookupObject<volScalarField>("T");  // Find calculated temperature field
+
+            const volVectorField& C = mesh().C();              // Reference to cell centers
+
+            const surfaceVectorField& Cf = mesh().Cf();        // Reference to face centers
+
+            const scalarField& V = mesh().V();                 // Reference to cell volumes
+
+            // Field to store the difference between the calculated and manufactured solution
+            volScalarField MMS_diff                    
+            (                                
+                IOobject                       
+                (                              
+                    "MMS_diff",                
+                    mesh().time().timeName(),    
+                    mesh(),                      
+                    IOobject::NO_READ,           
+                    IOobject::AUTO_WRITE         
+                ),                             
+                mesh(),                         
+                dimensionedScalar ("MMS_diff_", dimless, 0.0) 
+            );                               
+
+                                    
+
+            forAll(MMS_diff, cellI)          
+            {                               
+                const scalar x = C[cellI].x();  // Gets the x component of the current cell 
+ 
+                const scalar y = C[cellI].y();  //Gets the y component of the current cell
+                                     
+                const scalar solution = 225.0 + 150*Foam::cos(x*x + y*y);  // T(x,y) from MMS
+                                    
+                MMS_diff[cellI] = mag(solution - T_find[cellI]); 
+            }                               
+
+            forAll(MMS_diff.boundaryField(), patchI)      
+            {                               
+                forAll(MMS_diff.boundaryField()[patchI], faceI)      
+                {                             
+                    const scalar x = Cf.boundaryField()[patchI][faceI].x();  // Gets the x component of the current face
+
+                    const scalar y = Cf.boundaryField()[patchI][faceI].y();  // Gets the y component of the current face
+                                     
+                    const scalar solution = 225.0 + 150*Foam::cos(x*x + y*y);  // T(x,y) from MMS
+                                  
+                                                      
+                    MMS_diff.boundaryFieldRef()[patchI][faceI] = mag(solution - T_find.boundaryField()[patchI][faceI]); 
+                }                             
+            }                               
+
+            Info << "L1 norm is: "    << gSum( MMS_diff*V )/gSum(V)                   << endl;     
+
+            Info << "L2 norm is: "    << sqrt( gSum(MMS_diff*MMS_diff*V)/gSum(V) )    << endl;     
+
+            Info << "Linf norm is: "  << gMax( MMS_diff )                             << endl;     
+
+                              
+            MMS_diff.write();                
+        #};                               
+    }                                   
+}
+
+// ************************************************************************* //

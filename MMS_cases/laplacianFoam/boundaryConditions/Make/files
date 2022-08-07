@@ -1,0 +1,3 @@
+laplacianFoam/dirichletT.C
+
+LIB = $(FOAM_USER_LIBBIN)/libnewBoundaryConditions

@@ -1,0 +1,30 @@
+#    Script developed by:
+#          Computational Rheology Group at the Institute for Polymers and Composites, University of Minho, Portugal, 2022
+#    If you find any problems/mistakes or have any improvement recommendations, please contact: info@crheo.org
+
+
+#!/bin/sh
+cd "${0%/*}" || exit                                # Run from this directory
+. ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions        # Tutorial run functions
+#------------------------------------------------------------------------------
+
+# Create mesh
+runApplication blockMesh
+
+# Decompose mesh
+runApplication decomposePar
+
+# Run in parallel
+runParallel $(getApplication)
+
+# Reconstruct the case
+runApplication reconstructPar
+
+# Erase processor folders
+rm -rf processor*
+
+# Create a file to view in Paraview
+touch file.foam
+
+
+#------------------------------------------------------------------------------
