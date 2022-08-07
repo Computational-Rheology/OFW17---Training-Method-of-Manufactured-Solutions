@@ -1,5 +1,3 @@
-# OFW17---Training-Methof-of-Manufactured-Solutions
-
 # OFW17---Training-Method-of-Manufactured-Solutions
 
 Training session from OFW17 - Code verification through the method of manufactured solutions
